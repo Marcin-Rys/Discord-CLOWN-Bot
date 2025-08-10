@@ -1,0 +1,12 @@
+{
+    "error_file_not_found": "Error: File not found: {filename}",
+    "error_invalid_json": "Error: Invalid JSON file format: {filename}",
+    "error_no_previous_message": "Error: No previous message found.",
+    "error_processing_message": "Error processing message: {error}",
+    "error_loading_data": "Error: Failed to load data from JSON file.",
+    "command_swear_description": "Adds curses and punchlines to the message",
+    "success_commands_synced": "Synced {num_commands} commands.",
+     "connected_to_discord": "{bot_user} has connected to Discord! And also to the following guild:\n{guild_name}(id: {guild_id})",
+    "logged_in_as": "Logged in as {bot_user}"
+
+}

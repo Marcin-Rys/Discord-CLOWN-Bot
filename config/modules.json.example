@@ -1,0 +1,32 @@
+{
+    "administrative": {
+        "channel_selector": true,
+        "counter_commands": true,
+        "command_refresher": false,
+        "owner": true
+    },
+
+    "engine":{
+        "general": true,
+        "lang_utils": false,
+        "sqlite_database_init": false,
+        "cooldown_manager": false
+    },
+
+    "features": {
+        "on_member_join": true,
+        "role_counter": false,
+        "status": true
+    },
+
+    "fun": {
+        "dice_roll":true,
+        "jokes": true,
+        "responses": true,
+        "sra": true,
+        "swearer": true,
+        "ama":true
+    }
+}
+  
+ 

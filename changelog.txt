@@ -1,0 +1,30 @@
+V1.00 - 09.08.2025y
+### Fully rewrited bot ot be fully modular, rewrited modules and added new. Current module list:
+administrative:
+    - channel_selector - to select notification channel 
+    - command_refresher - to refresh commands, not used right now
+    - counter_commands - role counter commands
+
+engine:
+    - general - to inform about loaded commands etc.
+    - lang_utils - currently building, this will be later a language pack loader
+    - sqlite_database_init - helper module to initialize database for other modules
+
+features:
+    - on_member_join - makes notification on channel and sends DM to user which recently joined
+    - role_counter - adds "voice" channels counting roles
+    - status - changes status to funny one as per old communication apps
+
+fun:
+    - dice_roll - command rolls dice!
+    - jokes - command, sends jokes(random or not)
+    - responses - when user writes special word in message, bot will automatically respond
+    - sra - command in Polish language, "sra" prefix is funny! This function adds it to random word in message
+    - swearer - commands, add random swears to message.
+    - ama - new module to ask bot anything!
+
+## TODO:
+    - language pack module
+    - rewrite function sra.py, swearer.py
+    - integrate with twitch
+    - integrate with website

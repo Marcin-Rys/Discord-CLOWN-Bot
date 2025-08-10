@@ -1,0 +1,34 @@
+# Pliki środowiskowe (bardzo ważne!)
+.env
+config.json
+config/cooldowns.json
+config/modules.json
+config/cooldowns.json
+
+# Foldery środowiska wirtualnego Pythona
+.venv/
+venv/
+env/
+
+
+# Pliki generowane przez Pythona
+__pycache__/
+*.pyc
+
+data/responses.json
+data/jokes.json
+data/statuses.json
+data/swears.json
+data/ama.json
+
+sounds/
+
+# Baza danych i logi
+*.db
+*.db-journal*
+*.log
+data/
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db

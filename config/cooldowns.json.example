@@ -1,0 +1,53 @@
+{
+    "sra_command": [
+        {
+        "name": "15 minute limit",
+        "limit": 1,
+        "period_seconds": 900
+        },
+        {
+        "name": "1 hour limit",
+        "limit": 3,
+        "period_seconds": 3600
+        },
+        {
+        "name": "1 day limit",
+        "limit": 5,
+        "period_seconds": 86400
+        }
+    ],
+    "honk_response": [
+        {
+        "name": "15 minute limit",
+        "limit": 1,
+        "period_seconds": 900
+        },
+        {
+        "name": "1 hour limit",
+        "limit": 3,
+        "period_seconds": 3600
+        },
+        {
+        "name": "1 day limit",
+        "limit": 5,
+        "period_seconds": 86400
+        }
+    ],
+    "swearer_command": [
+        {
+        "name": "15 minute limit",
+        "limit": 1,
+        "period_seconds": 900
+        },
+        {
+        "name": "1 hour limit",
+        "limit": 3,
+        "period_seconds": 3600
+        },
+        {
+        "name": "1 day limit",
+        "limit": 5,
+        "period_seconds": 86400
+        }  
+    ]
+}
