@@ -1,0 +1,27 @@
+{
+    "answer_categories": [
+        {
+            "category_name": "Positive",
+            "answers": [
+                "Yes!",
+                "Of course!",
+                "Sure!"
+            ]
+        },
+        {
+            "category_name": "Negative",
+            "answers": [
+                "No.",
+                "Negative!",
+                "Nah!
+            ]
+        },
+        {
+            "category_name": "Neutral",
+            "answers": [
+                "Dunno",
+                "Huh?!"
+            ]
+        }
+    ]
+}

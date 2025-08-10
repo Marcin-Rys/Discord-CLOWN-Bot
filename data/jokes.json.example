@@ -1,0 +1,33 @@
+{
+	"joke_categories":
+    [
+		{ 
+			"category_name":"CategoryXYZ",
+			"jokes": 
+			[
+                "joke1", 
+                "joke2",
+                "joke3"
+            ]
+                },
+		{
+			"category_name":"CategoryABC",
+			"jokes": 
+					[
+                        "joke1",
+                        "joke2",
+                        "joke3"
+                    ],
+
+        },
+        {
+			"category_name":"CategoryCZX",
+			"jokes": 
+					[
+                        "joke1",
+                        "joke2",
+                        "joke3"
+                    ]
+        }
+    ]
+}

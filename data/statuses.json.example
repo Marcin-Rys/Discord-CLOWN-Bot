@@ -1,0 +1,25 @@
+{
+    "status_categories": 
+    [
+        {
+        "category_name":"Funny",
+        "emojis":["😂","😜","🤡","🤣","😛","😜","🤪","😝","🤭"],
+        "statuses":
+        [
+        "status1",
+        "status2",
+        "status3"
+        ]
+        },
+        {
+        "category_name":"Sad",
+        "emojis":["😥","😭","😥","😰","😓"],
+        "statuses":
+        [
+        "status1",
+        "status2",
+        "status3"
+        ]
+        }
+    ]
+}

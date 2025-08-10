@@ -20,14 +20,12 @@ data/jokes.json
 data/statuses.json
 data/swears.json
 data/ama.json
-
 sounds/
 
 # Baza danych i logi
 *.db
 *.db-journal*
 *.log
-data/
 
 # Pliki systemowe
 .DS_Store
