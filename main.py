@@ -61,7 +61,7 @@ class DiscordBot(commands.Bot):
 # MAIN START FUNCTION
 # ==============================================================================
 async def main():
-    
+    """
     ## Logging for debugging purposes
     logging.basicConfig(
     level=logging.INFO,
@@ -71,7 +71,7 @@ async def main():
     ]
     )
     logging.getLogger("discord").setLevel(logging.DEBUG)
-    
+    """
     print("---MAIN BOT STARTUP INITIALIZED---")
     
     load_dotenv()
