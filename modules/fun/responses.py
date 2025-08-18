@@ -12,7 +12,7 @@ class MessageResponder(commands.Cog):
         cooldown_configs = {} 
        
         try:
-            with open("config/cooldowns.json", 'r', encoding='utf=8') as f:
+            with open("config/cooldowns.json", 'r', encoding='utf-8') as f:
                 cooldown_configs = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             print(f"WARNING (MessageResponder Cog): cannot load cooldowns.json: {e}")
