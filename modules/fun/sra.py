@@ -18,32 +18,63 @@ class Sra(commands.Cog):
             print(f"Cannot (Sra module): cannot load cooldowns file: {e}")
         self.cooldown_manager = CooldownManager(db_path, cooldown_configs)
     def _sra_text(self, text: str) -> str:
-        ## Private method which search for letter "a/A" in word and it puts in random place "sra-"
+        """ Private method to modify text by adding 'sra' prefix """
+        
         words = text.split()
-        words_with_a = [word for word in words if 'a' in word.lower()] # Find an letters "a" or "A", ignore case
+        #Step 1 - filtering candidates for words to be replaced
+        potential_words = [word for word in words if 'a' in word.lower() and len(word) > 2 and not word.lower(endswith("sra"))]
 
-        if not words_with_a:
-            return "W podanym tekście nie znaleziono słów z literą 'a'." #TODO language pack
+        if not potential_words:
+            return "W podanym tekście nie znalazłem żadnych słów do przerobienia."  #TODO language pack
         
-        word_to_modify = random.choice(words_with_a)
+        #Step 2 - Prioritizing words by points 
+        best_word = None
+        highest_score = -1
+
+        for word in potential_words:
+            score = 0
+            if len(word) > 4:
+                score += 2 # Longer words get more points
+
+            score += 3 * word.lower().count('a')  # Each 'a' in word gives 3 points
+
+            if word.lower().count('a') == 1 and word.lower().endswith('a'):
+                score -= 4 # If word ends with 'a' and has only one 'a', it gets -4 points
+            
+            #checking if this is the best word so far
+            if score > highest_score:
+                highest_score = score
+                best_word = word 
+
+        if best_word is None:
+            best_word = random.choice(potential_words)  # Fallback to random word if no best found
+
+
+        #Step 3 - Replacing the best word with 'sra' version
         try:
-            word_index = words.index(word_to_modify) # We remember word position
+            word_index = words.index(best_word)
         except ValueError:
-            return "Wystąpił błąd podczas modyfikacji tekstu."
-        a_indices = [i for i, char in enumerate(word_to_modify) if char.lower() == 'a'] # We are finding all 'a' and 'A'
+            return "Wystąpił błąd podczas modyfikacji textu."  #TODO language pack
 
-        if not a_indices: # If not found, return original
-            return text
-        
-        chosen_a_index = random.choice(a_indices)
+        a_indices = [i for i, char in enumerate(best_word) if char.lower() == 'a'] #checking all 'a' in word.
 
-        ## New  modification, more funny!
-        prefix = word_to_modify[:chosen_a_index]
-        suffix = word_to_modify[chosen_a_index + 1:]
-        modified_word = f"{prefix}sra{suffix}"
+        #Giving more chance to select 'a' closer to the beginning of word. We are waged list where first 'a' has more chance to be selected.
+        weights = [len(a_indices) - i for i in range(len(a_indices))]
+        chosen_a_index = random.choices(a_indices, weights=weights, k=1)[0]
 
-        words[word_index] = modified_word
-        return " ".join(words)
+        # saving the suffix of 'a' word
+        suffix = best_word[chosen_a_index:]
+
+        if best_word[0].isupper():
+            modified_word = "Sra" + suffix
+        else:
+            modified_word = "sra" + suffix
+
+        #Step 4 - returning an edited text
+        words[word_index] = modified_word  # Replacing the word in the list
+        return " ".join(words)  # Joining the words back into a string
+
+
     
     @app_commands.command(name="sra", description="W sposób bardzo inteligentny przerabia treść lub ostatnią wiadomość dodając prefix 'sra'.") #TODO language pack
     @app_commands.describe(text="Tekst do przerobienia(opcjonalnie, jeśli pusty - użyje ostatniej wiadomości)") #TODO language pack

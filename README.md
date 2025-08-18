@@ -12,3 +12,12 @@ DISCORD_GUILD=''  # - add here your guild name
 2. Create and populate data files(jokes.json, responses.json, statuses.json, swears.json)
 
 3. And then just run main.py! 
+
+
+## License
+
+This project is licensed under the **GNU Affero General Public License v3.0**. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
+This bot uses sound assets from the [tgstation/tgstation](https://github.com/tgstation/tgstation) project, which are also licensed under the AGPL-3.0.
