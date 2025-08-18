@@ -79,10 +79,13 @@ class Sra(commands.Cog):
     @app_commands.command(name="sra", description="W sposób bardzo inteligentny przerabia treść lub ostatnią wiadomość dodając prefix 'sra'.") #TODO language pack
     @app_commands.describe(text="Tekst do przerobienia(opcjonalnie, jeśli pusty - użyje ostatniej wiadomości)") #TODO language pack
     async def sra(self, interaction: discord.Interaction, text: Optional[str] = None):
-        await interaction.response.defer(thinking=True) # Giving us time for background task
-        
+        await interaction.response.defer(thinking=True, ephemeral=True) # Giving us time for background task
+
         feature_name = "sra_command"
         can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
+        feature_name = "sra_command"
+        can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
+            await interaction.followup.send_message(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
         if not can_use:
             await interaction.response.send_message(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
             return

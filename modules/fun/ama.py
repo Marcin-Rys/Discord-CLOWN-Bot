@@ -42,8 +42,11 @@ class QuestionResponder(commands.Cog):
         is_bot_mentioned = self.bot.user.id in mentioned_ids
         is_a_question = message.content.strip().endswith('?')
 
+        """ --- Uncomment this for debug purposes ---
+        
         if is_a_question:
             print(f"--- DEBUG (Pytanie): Wiadomość to pytanie. Czy bot wspomniany? {is_bot_mentioned} ---")
+        """    
         if is_bot_mentioned and is_a_question:
             if not self.all_answers: # Check if we have any response to randomize
                 await message.reply("Nie umiem odpowiedzieć teraz na to pytanie, ŻEGNAM") #TODO language pack
