@@ -52,17 +52,15 @@ class StatusManager(commands.Cog):
 
     @tasks.loop(seconds=120) # This value is default, will be overwritten in __init__
     async def change_status(self):
-        await self._set_random_status() # Periodic loop to change status
-
+        try:
+            await self._set_random_status() # Periodic loop to change status
+        except Exception as e:
+            print(f"Error while changing status: {e}")
     @change_status.before_loop
     async def before_change_status(self):
-        print("StatusManager: Oczekiwanie na gotowość bota przed uruchomieniem pętli statusów...")
         await self.bot.wait_until_ready()
-        print("StatusManager: Bot gotowy, ustawiam pierwszy status i uruchamiam pętlę.")
-        # Ustawiamy pierwszy status tutaj, a nie w on_ready
-        await self._set_random_status() 
-
-
+        print("StatusManager: Oczekiwanie na gotowość bota przed uruchomieniem pętli statusów...")
+        
     def module_unload(self):
             self.change_status.cancel() # Stops loop while module is unloaded
 

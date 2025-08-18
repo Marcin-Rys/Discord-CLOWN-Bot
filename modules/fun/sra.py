@@ -22,7 +22,7 @@ class Sra(commands.Cog):
         
         words = text.split()
         #Step 1 - filtering candidates for words to be replaced
-        potential_words = [word for word in words if 'a' in word.lower() and len(word) > 2 and not word.lower(endswith("sra"))]
+        potential_words = [word for word in words if 'a' in word.lower() and len(word) > 2 and not word.lower().endswith("sra")]
 
         if not potential_words:
             return "W podanym tekście nie znalazłem żadnych słów do przerobienia."  #TODO language pack
@@ -33,6 +33,7 @@ class Sra(commands.Cog):
 
         for word in potential_words:
             score = 0
+            
             if len(word) > 4:
                 score += 2 # Longer words get more points
 
@@ -63,7 +64,7 @@ class Sra(commands.Cog):
         chosen_a_index = random.choices(a_indices, weights=weights, k=1)[0]
 
         # saving the suffix of 'a' word
-        suffix = best_word[chosen_a_index:]
+        suffix = best_word[chosen_a_index + 1:]
 
         if best_word[0].isupper():
             modified_word = "Sra" + suffix
@@ -83,11 +84,8 @@ class Sra(commands.Cog):
 
         feature_name = "sra_command"
         can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
-        feature_name = "sra_command"
-        can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
-            await interaction.followup.send_message(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
         if not can_use:
-            await interaction.response.send_message(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
+            await interaction.followup.send(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
             return
         
         target_text = ""

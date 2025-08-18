@@ -41,6 +41,18 @@ async def initialize_database(db_path: str):
                     timestamp TEXT NOT NULL
                 )
             """)
+            
+            #table for cooldown warnings
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS cooldown_warnings (
+                    user_id INTEGER NOT NULL,
+                    guild_id INTEGER NOT NULL,
+                    feature_name TEXT NOT NULL,
+                    warning_level INTEGER DEFAULT 0,
+                    PRIMARY KEY (user_id, guild_id, feature_name)
+                )
+            """)
+
 
             ## Table for guild settings
             await db.execute("""
