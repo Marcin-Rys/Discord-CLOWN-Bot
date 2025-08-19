@@ -7,12 +7,14 @@ import json
 from ..engine.cooldown_manager import CooldownManager
 
 # --- HELPER FUNCTION ---
-def process_sra_logic(self, text: str) -> tuple[str, bool]:
+def process_sra_logic(text: str) -> tuple[str, bool]:
     """ 
     Modifying text by adding 'sra' prefix 
     returns(result_tekst, if_succeed)
     """
-    
+    if not text or not text.strip():
+        return "Nie podano tekstu do przetworzenia.", False
+
     words = text.split()
     #Step 1 - filtering candidates for words to be replaced
     potential_words = [word for word in words if 'a' in word.lower() and len(word) > 2 and not word.lower().endswith("sra")]
@@ -80,43 +82,41 @@ class Sra(commands.Cog):
     @app_commands.command(name="sra", description="W sposób bardzo inteligentny przerabia treść lub ostatnią wiadomość dodając prefix 'sra'.") #TODO language pack
     @app_commands.describe(text="Tekst do przerobienia(opcjonalnie, jeśli pusty - użyje ostatniej wiadomości)") #TODO language pack
     async def sra(self, interaction: discord.Interaction, text: Optional[str] = None):
-
-        #--- Step 1: Validation if user can use command and not exceed limit ---
+        await interaction.response.defer(thinking=True)  #Public defer as operation might take longer
+        
         feature_name = "sra_command"
         can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
         if not can_use:
-            await interaction.response.send_message(f"Hola hola, zwolnij z użyciem!, {reason}", ephemeral=True)
+            #await interaction.followup.send(contet=f"Hola hola, zwolnij! {reason}", ephemeral=True)
+            await interaction.edit_original_response(content=f"Hola hola, zwolnij! {reason}")
+            await interaction.delete_original_response(delay=10)
             return
 
-        #--- Step 2: Downloading data ---
-        target_text = ""
-        responder = interaction.response
-
-        if text:
-            target_text = text
-        else:
-            await interaction.response.defer(thinking=True) #Searching history is slow, we need to use defer, we are using public one as we are reaching for success...
-            responder = interaction.followup
-
+        target_text = text
+        if not target_text:
             message_found = False
-            async for message in interaction.channel.history(limit=10): #Logic for searching in history
+            async for message in interaction.channel.history(limit=10):
                 if (not message.author.bot or message.author.id == self.bot.user.id) and message.clean_content:
                     target_text = message.clean_content
                     message_found = True
                     break
+                    
             if not message_found:
-                await responder.send("Nie znalazłem żadnej wiadomości do przerobienia", ephemeral=True) #Error is always ephemeral, we are using 'responder' which is now followup
+                #deleting public thinking and then sending new ephemeric message
+                #await interaction.delete_original_response()
+                #await interaction.followup.send(content="Nie znalazłem żadnej wiadomości do przerobienia.",ephemeral=True)
+                await interaction.edit_original_response(content="W pobliżu nie znalazłem żadnej wiadomości do przerobienia.")
+                await interaction.delete_original_response(delay=10)
                 return
-            
-        # -- Step 3: Editing and reply ---
-        # Querying helper function which will return up an result and success flag
-        result_text, was_succesful = process_sra_logic(target_text)
 
-        if was_succesful:
+        result_text, was_succesfull = process_sra_logic(target_text)
+
+        if was_succesfull:
             await self.cooldown_manager.record_usage(interaction.user.id, interaction.guild.id, feature_name)
-            await responder.send(result_text)
+            await interaction.edit_original_response(content=result_text) #sending public response
         else:
-            await responder.send(result_text, ephemeral=True)
+            await interaction.delete_original_response()
+            await interaction.followup.send(result_text, ephemeral=True)
 
 # --- STANDARD COG/MODULE SETUP ---
 async def setup(bot: commands.Bot): # Standard setup function
