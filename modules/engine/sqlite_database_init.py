@@ -11,16 +11,7 @@ async def initialize_database(db_path: str):
     try:
         async with aiosqlite.connect(db_path) as db:
             
-            ## Table for role counters
-            await db.execute("""
-                CREATE TABLE IF NOT EXISTS role_counters (
-                    guild_id INTEGER NOT NULL,
-                    role_id INTEGER NOT NULL,
-                    channel_id INTEGER NOT NULL,
-                    PRIMARY KEY (guild_id, role_id)
-                )
-            """)
-
+            # --- STATISTICS TABLES  ---
             ## Table for user stats
             await db.execute("""
                  CREATE TABLE IF NOT EXISTS user_stats (
@@ -41,8 +32,9 @@ async def initialize_database(db_path: str):
                     timestamp TEXT NOT NULL
                 )
             """)
-            
-            #table for cooldown warnings
+
+            # --- COOLDOWNS/WARNIGNS ---
+            # Table for cooldown warnings
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS cooldown_warnings (
                     user_id INTEGER NOT NULL,
@@ -54,7 +46,8 @@ async def initialize_database(db_path: str):
             """)
 
 
-            ## Table for guild settings
+            # --- GUILD CHANNELS SETTINGS ---
+            ## Table for guild settings(notification channel for now)
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS guild_settings (
                     guild_id INTEGER PRIMARY KEY,
@@ -62,7 +55,47 @@ async def initialize_database(db_path: str):
                 )
             """)
 
+            ## Table for role users counters
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS role_counters (
+                    guild_id INTEGER NOT NULL,
+                    role_id INTEGER NOT NULL,
+                    channel_id INTEGER NOT NULL,
+                    PRIMARY KEY (guild_id, role_id)
+                )
+            """)
 
+            # --- ROLE MANAGEMENT ---
+            # Table which saves "role groups" to be choosen
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS role_groups (
+                             group_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             guild_id INTEGER NOT NULL,
+                             group_name TEXT NOT NULL UNIQUE,
+                             group_description TEXT
+                             )
+                        """)
+
+            # Table for which roles can be chosen for each privileged group
+            await db.execute("""
+                    CREATE TABLE IF NOT EXISTS selectable_roles (
+                             selectable_role_id INTEGER PRIMARY KEY,
+                             group_id INTEGER NOT NULL,
+                             role_id INTEGER NOT NULL,
+                             role_description TEXT,
+                             FOREIGN KEY (group_id) REFERENCES role_groups (group_id) ON DELETE CASCADE
+                             )
+                             """)
+            
+            await db.execute("""
+                    CREATE TABLE IF NOT EXISTS role_group_permissions (
+                        permission_id INTEGER PRIMARY KEY,
+                             required_role_id INTEGER NOT NULL,
+                             group_id INTEGER NOT NULL,
+                             guild_id INTEGER NOT NULL,
+                             FOREIGN KEY (group_id) REFERENCES role_groups (group_id) on DELETE CASCADE
+                        )         
+                    """)
             await db.commit()
             
         print("Database initialized succesfully")
