@@ -1,0 +1,12 @@
+{
+    "error_no_text_provided":"Nie podano tekstu do przerobienia. Smutne honkanie :(",
+    "error_no_words_found": "Co ty głupi? Tu nie ma żadnego śmiesznego słowa z 'a' żeby dodać sra.",
+    "error_processing_text":"Coś poszło nie tak przy przetwarzaniu tekstu. Przepraszam... chyba.",
+    
+    "command_description":"W bardzo inteigentny sposób przerabia treść lub ostatnią wiadomość dodając prefiks 'sra'.",
+    "option_text_description": "Placeholder1",
+    
+    "error_notinguild": "Ta komenda może być używana jedynie na serwerach(na te chwilę)",    
+    "error_cooldown": "Hola hola, zwolnij! {reason}",
+    "error_nomsg": "W pobliżu nie znalazłem żadnej wiadomości do przerobienia."
+}

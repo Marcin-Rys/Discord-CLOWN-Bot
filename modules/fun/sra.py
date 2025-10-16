@@ -2,25 +2,26 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import random
-from typing import Optional
+from typing import Optional, Tuple
 import json
 from ..engine.cooldown_manager import CooldownManager
 
+_ = app_commands.locale_str
 # --- HELPER FUNCTION ---
-def process_sra_logic(text: str) -> tuple[str, bool]:
+def process_sra_logic(text: str) -> tuple[Optional[str], Optional[str]]:
     """ 
     Modifying text by adding 'sra' prefix 
     returns(result_tekst, if_succeed)
     """
     if not text or not text.strip():
-        return "Nie podano tekstu do przetworzenia.", False
+        return None, "sra:error_no_text_provided"
 
     words = text.split()
     #Step 1 - filtering candidates for words to be replaced
     potential_words = [word for word in words if 'a' in word.lower() and len(word) > 2 and not word.lower().endswith("sra")]
 
     if not potential_words:
-        return "W podanym tekście nie znalazłem żadnych słów do przerobienia.", False  #TODO language pack
+        return None, "sra:error_no_words_found"
     
     #Step 2 - Prioritizing words by points 
     best_word = None
@@ -45,9 +46,10 @@ def process_sra_logic(text: str) -> tuple[str, bool]:
 
     #Step 3 - Replacing the best word with 'sra' version
     try:
+        
         word_index = words.index(best_word)
     except ValueError:
-        return "Wystąpił błąd podczas modyfikacji textu.", False  #TODO language pack
+        return None, "sra:error_processing_text"
 
     a_indices = [i for i, char in enumerate(best_word) if char.lower() == 'a'] #checking all 'a' in word.
 
@@ -65,30 +67,39 @@ def process_sra_logic(text: str) -> tuple[str, bool]:
 
     #Step 4 - returning an edited text
     words[word_index] = modified_word  # Replacing the word in the list
-    return " ".join(words),True  # Joining the words back into a string
+    return " ".join(words),None  # Joining the words back into a string
 
 class Sra(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         db_path = self.bot.config["database_path"]  # Assuming database path is set in config
-        cooldown_configs = {}
-        try:
-            with open("config/cooldowns.json", 'r', encoding='utf-8') as f:
-                cooldown_configs = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            print(f"Cannot (Sra module): cannot load cooldowns file: {e}")
-        self.cooldown_manager = CooldownManager(db_path, cooldown_configs)
+        self.cooldown_manager = CooldownManager(db_path)
         
-    @app_commands.command(name="sra", description="W sposób bardzo inteligentny przerabia treść lub ostatnią wiadomość dodając prefix 'sra'.") #TODO language pack
-    @app_commands.describe(text="Tekst do przerobienia(opcjonalnie, jeśli pusty - użyje ostatniej wiadomości)") #TODO language pack
+    @app_commands.command(
+            name= "sra", 
+            description=_("sra:command_description")
+    )
+    @app_commands.describe(
+        text=_("sra:option_text_description")
+    )
+    @app_commands.rename(text="test2")
+
     async def sra(self, interaction: discord.Interaction, text: Optional[str] = None):
+        translator = self.bot.tree.translator #using translator to get error messages
+
+        if not interaction.guild:
+            error_msg =  translator.get_translation("sra:error_notinguild", interaction.locale)
+            await interaction.response.send_message(error_msg or "This command can only be used in a server", ephemeral=True)
+            return
+       
         await interaction.response.defer(thinking=True)  #Public defer as operation might take longer
         
         feature_name = "sra_command"
         can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
         if not can_use:
             #await interaction.followup.send(contet=f"Hola hola, zwolnij! {reason}", ephemeral=True)
-            await interaction.edit_original_response(content=f"Hola hola, zwolnij! {reason}")
+            error_msg = translator.get_translation("sra:error_cooldown", interaction.locale)
+            await interaction.edit_original_response(content=(error_msg or "Slow down! {reason}"). format(reason=reason))
             await interaction.delete_original_response(delay=10)
             return
 
@@ -103,20 +114,20 @@ class Sra(commands.Cog):
                     
             if not message_found:
                 #deleting public thinking and then sending new ephemeric message
-                #await interaction.delete_original_response()
-                #await interaction.followup.send(content="Nie znalazłem żadnej wiadomości do przerobienia.",ephemeral=True)
-                await interaction.edit_original_response(content="W pobliżu nie znalazłem żadnej wiadomości do przerobienia.")
+                error_msg = translator.get_translation("sra:error_nomsg", interaction.locale)
+                await interaction.edit_original_response(content=error_msg or "I couldn't find any message to mess up.")
                 await interaction.delete_original_response(delay=10)
                 return
 
-        result_text, was_succesfull = process_sra_logic(target_text)
+        result_text, error_key = process_sra_logic(target_text)
 
-        if was_succesfull:
-            await self.cooldown_manager.record_usage(interaction.user.id, interaction.guild.id, feature_name)
-            await interaction.edit_original_response(content=result_text) #sending public response
-        else:
+        if error_key :
+            error_msg = translator.get_translation(error_key, interaction.locale)
             await interaction.delete_original_response()
-            await interaction.followup.send(result_text, ephemeral=True)
+            await interaction.followup.send(error_msg or "An error occured while processing the text.", ephemeral=True)
+        else:
+            await self.cooldown_manager.record_usage(interaction.user.id, interaction.guild.id, feature_name)
+            await interaction.edit_original_response(content=result_text)
 
 # --- STANDARD COG/MODULE SETUP ---
 async def setup(bot: commands.Bot): # Standard setup function

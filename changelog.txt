@@ -23,6 +23,15 @@ fun:
     - swearer - commands, add random swears to message.
     - ama - new module to ask bot anything!
 
+v1.01
+engine:
+    -translation module now functional
+    - counting invoking of commands now works and
+    tries to spam with commands are now disabled
+fun: 
+    - preparing modules like sra/swears
+    and others to be managed by central sqlite database
+
 ## TODO:
     - language pack module
     - rewrite function sra.py, swearer.py

@@ -1,78 +1,121 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
-import json
 import random
-import os
-from typing import List
-    
+import aiosqlite
+from typing import List, Optional
+
+from ..engine.guild_utils import get_accessible_guilds_for_feature
+
 class Jokes(commands.Cog):
     #adding for module an name and description
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        #creating blank lists and dictionaires which will be populated.
-        self.all_jokes: List[str] = []
-        self.jokes_by_category: dict[str, List[str]] = {}
-        self._load_jokes_from_file()
+        self.db_path = self.bot.config["database_path"]
 
-    def _load_jokes_from_file(self):
-        """
-        section to load jokes from json only once while initializing module
-        """
-        config = self.bot.config
-        jokes_filename = config["module_files"]["jokes_file"]
-        data_dir = config["directories"]["data_dir"]
-        file_path = os.path.join(data_dir, jokes_filename)
-
-        try:
-            with open(file_path, 'r', encoding='utf-8') as file:
-                    data = json.load(file)
-            # manipulating data and saving in attribute 'self'
-            for category in data['joke_categories']:
-                    category_name = category['category_name']
-                    jokes_in_category = category['jokes']
-
-                    self.all_jokes.extend(jokes_in_category)
-                    self.jokes_by_category[category_name] = jokes_in_category
-
-            print(f"Loaded succesfully {len(self.all_jokes)} jokes from {len(self.jokes_by_category)} categories") #TODO dodać tłumaczenie paczkę jezykową
-
-        except FileNotFoundError:
-            print (f"ERROR: Jokes file not found: {file_path}") #TODO dodać tłumaczenie paczkę jezykową
-        except (json.JSONDecodeError, KeyError) as e:
-            print(f"ERROR: Jokes file is damaged or has wrong format {e}") #TODO dodać tłumaczenie paczkę jezykową
-        
-    joke_group = app_commands.Group(name="kawal", description="Komendy do opowiadania kawałów") #TODO dodać tłumaczenie paczkę jezykową
-
-    @joke_group.command(name="random", description="Tells random joke from random category") #TODO dodać tłumaczenie paczkę jezykową
-    async def random_joke(self, interaction: discord.Interaction):
-        if not self.all_jokes:
-            await interaction.response.send_message("Sorry, I did not have any loaded jokes", ephemeral=True) #TODO dodać tłumaczenie paczkę jezykową
-            return
-        joke = random.choice(self.all_jokes)
-        await interaction.response.send_message(joke)
-
-    @joke_group.command(name="kategoria", description="Tells a random joke from category") #TODO dodać tłumaczenie paczkę jezykową
-    @app_commands.describe(category="Select category from which you want to get a joke") #TODO dodać tłumaczenie paczkę jezykową
-    async def category_joke(self, interaction: discord.Interaction, category: str):
-        if category in self.jokes_by_category:
-              joke = random.choice(self.jokes_by_category[category])
-              await interaction.response.send_message(joke)
+    # --- Helper functions and for autocompletion
+    async def get_categories_for_context(self, interaction: discord.Interaction) -> List[str]:
+        """Gets available categories of jokes with context(server or DM)"""
+        guilds_to_check = []
+        if interaction.guild:
+            guilds_to_check.append(interaction.guild)
         else:
-            await interaction.response.send_message(f"I dont know category '{category}'. Please select one from list.", ephemeral=True) #TODO dodać tłumaczenie paczkę jezykową
+            guilds_to_check = await get_accessible_guilds_for_feature(self.bot, interaction.user, "jokes_command")
 
-    # Autocomplete
-    @category_joke.autocomplete('category')
-    async def category_atuocomplete(self, interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
-        """
-        This function is invoked when user is starting typing in option 'category', addding dynamic suggestions
-        """
-        categories = self.jokes_by_category.keys()
+        if not guilds_to_check:
+            return[]
+        
+        guild_ids = [g.id for g in guilds_to_check]
+        placeholders = ', '.join('?' for _ in guild_ids)
+
+        categories = []
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                f"SELECT DISTINCT category FROM jokes WHERE guild_id IN ({placeholders})",
+                guild_ids
+            )
+            rows = await cursor.fetchall()
+            categories = [row[0] for row in rows]
+        return categories
+    
+    async def category_autocomplete(self, interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
+        """Dynamic autocompletion of jokes category"""
+        categories = await self.get_categories_for_context(interaction)
         return [
-              app_commands.Choice(name=category, value=category)
-              for category in categories if current.lower() in category.lower()
-        ][:25] #discord allows 25 suggestions
+            app_commands.Choice(name=category, value=category)
+            for category in categories if current.lower() in category.lower()
+        ][:25]
+    
 
-#standard function to add module to bot
+    # --- Command group ---
+    joke_group = app_commands.Group(name="joke", description="Tells a joke from database")
+
+    @joke_group.command(name="random", description="Tells random joke from all jokes")
+    async def random_joke(self, interaction: discord.Interaction):
+        await interaction.response.defer(thinking=True)
+
+        guilds_to_check = []
+        if interaction.guild:
+            guilds_to_check.append(interaction.guild)
+        else:
+            guilds_to_check = await get_accessible_guilds_for_feature(self.bot, interaction.user, "jokes_command")
+        
+        if not guilds_to_check:
+            await interaction.followup.send("Cannot find any jokes for you!", ephemeral=True)
+            return
+        
+        guild_ids = [g.id for g in guilds_to_check]
+        placeholders = ', '.join('?' for _ in guild_ids)
+
+        joke_text = None
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                f"SELECT text FROM jokes WHERE guild_id IN ({placeholders}) ORDER BY RANDOM() LIMIT 1",
+                guild_ids
+            )
+            result = await cursor.fetchone()
+            if result:
+                joke_text = result[0]
+
+        if joke_text:
+            await interaction.followup.send(joke_text)
+        else: 
+            await interaction.followup.send("Seems like there is no jokes for you", ephemeral=True)
+            
+    @joke_group.command(name="category", description="Tells random joke from selected category.")
+    @app_commands.describe(category="Select category from which you want to roll a joke.")
+    @app_commands.autocomplete(category=category_autocomplete)
+    async def category_joke(self, interaction: discord.Interaction, category: str):
+        await interaction.response.defer(thinking=True)
+
+        guilds_to_check = []
+        if interaction.guild:
+            guilds_to_check.append(interaction.guild)
+        else:
+            guilds_to_check = await get_accessible_guilds_for_feature(self.bot, interaction.user, "jokes_command")
+
+        if not guilds_to_check:
+            await interaction.followup.send("Cannot find any jokes for you!", ephemeral=True)
+            return
+        
+        guild_ids = [g.id for g in guilds_to_check]
+        placeholders = ', '.join('?' for _ in guild_ids)
+        params = guild_ids + [category]
+
+        joke_text = None
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute (
+                f"SELECT text FROM jokes WHERE guild_id IN ({placeholders}) AND category = ? ORDER BY RANDOM() LIMIT 1",
+                params
+            )
+            result = await cursor.fetchone()
+            if result:
+                joke_text = result[0]
+
+        if joke_text:
+            await interaction.followup.send(joke_text)
+        else:
+            await interaction.followup.send(f"Couldn't find any jokes in category '{category}' that are available for you", ephemeral=True)
+
 async def setup(bot: commands.Bot):
-     await bot.add_cog(Jokes(bot))
+    await bot.add_cog(Jokes(bot))

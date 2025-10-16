@@ -13,8 +13,8 @@ class QuestionResponder(commands.Cog):
     def _load_answers_from_file(self):
         # Loads and flattens all responses from categorized JSON file
         config = self.bot.config
-        filename = config["module_files"]["ama_file"]
-        dir_path = config["directories"]["data_dir"]
+        filename = config["data_files"]["ama_file"]
+        dir_path = config["data_dir"]
         file_path = os.path.join(dir_path, filename)
 
         try:

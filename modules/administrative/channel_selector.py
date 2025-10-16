@@ -16,7 +16,7 @@ class ChannelSelectorDropdown(Select):
 
     async def callback(self, interaction: discord.Interaction):
         # Loading database path from central bot config
-        db_path = self.bot.config ["database"]["path"]
+        db_path = self.bot.config["database_path"]
         selected_channel_id = int(self.values[0])
         guild_id = interaction.guild.id
 

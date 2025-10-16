@@ -1,31 +1,41 @@
 import aiosqlite
-import json
 from datetime import datetime, timedelta, timezone
 
 class CooldownManager:
-    def __init__(self, db_path: str, cooldown_configs: dict):
+    def __init__(self, db_path: str):
         self.db_path = db_path  # Assuming database path is set in config
-        self.cooldown_configs = cooldown_configs
+        print("---DEBUG(CooldownManager): CooldownManager (Database-drive) succesfully initialized ---")
+    async def check_cooldown(self, user_id: int, guild_id: int, feature_name: str) -> tuple[bool,str]:
+        #Check if user is on cooldown by downloading rules from database, returns (can_use, reason)
 
-    async def check_cooldown(self, user_id: int, guild_id: int, feature_name: str) -> tuple[bool, str]:
-        feature_config = self.cooldown_configs.get(feature_name) # downloads full configuration object
-        if not feature_config:
-            return True, ""
+        rules = []
+        #1. Download all cooldown rules for this function on guild
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                db.row_factory = aiosqlite.Row #allows access to colums per name
+                cursor = await db.execute(
+                    "SELECT limit_name, limit_count, period_seconds FROM guild_cooldowns WHERE guild_id = ? AND feature_name = ?",
+                    (guild_id, feature_name)
+                )
+                rules = await cursor.fetchall()
+        except Exception as e:
+            print(f"CRITICAL ERROR(CooldownManager): Cannot download rules for cooldown from database {e}")
+            return True, "" #In case of database error allow usage
         
-        rules = feature_config.get("limits")
         if not rules:
-            return True, "" # no rules, no limit
+            return True, "" #No rules in database = no limit
         
-        now = datetime.now(timezone.utc) 
+        now = datetime.now(timezone.utc)
 
+        #2. Check all rules
         async with aiosqlite.connect(self.db_path) as db:
             for rule in rules:
-                limit = rule['limit']
+                limit = rule['limit_count']
                 period = timedelta(seconds=rule['period_seconds'])
-                rule_name = rule.get('name', 'Unnamed Limit')
+                rule_name = rule['limit_name'] or "Unnamed limit"
 
-                start_time = now - period # time from which we are counting use of this rule
-
+                start_time = now - period
+                
                 cursor = await db.execute(
                     "SELECT COUNT(*) FROM command_usage WHERE user_id = ? AND guild_id = ? AND feature_name = ? AND timestamp >= ?",
                     (user_id, guild_id, feature_name, start_time.isoformat())
@@ -33,18 +43,23 @@ class CooldownManager:
                 usage_count = (await cursor.fetchone())[0]
 
                 if usage_count >= limit:
-                    return False, f"(Przekroczono {rule_name.lower()})"
-            return True, ""
+                    reason = f"Limit exceeded {rule_name.lower()}"
+                    return False, reason
+                
+        return True, ""
     
     async def record_usage(self, user_id: int, guild_id: int, feature_name: str):
         ## Saves using function in database
         timestamp = datetime.now(timezone.utc).isoformat()
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                "INSERT INTO command_usage (user_id, guild_id, feature_name, timestamp) VALUES (?, ?, ?, ?)",
-                (user_id, guild_id, feature_name, timestamp)
-            )
-            await db.commit()
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                await db.execute(
+                    "INSERT INTO command_usage (user_id, guild_id, feature_name, timestamp) VALUES (?, ?, ?, ?)",
+                    (user_id, guild_id, feature_name, timestamp)
+                )
+                await db.commit()
+        except Exception as e:
+            print(f"CRITICAL ERROR(CooldownManager): Cannot save usage of command to database: {e}")
 
     async def issue_warning(self, user_id: int, guild_id: int, feature_name: str) -> int:
         """

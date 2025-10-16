@@ -14,21 +14,16 @@ class Swearer(commands.Cog):
         self.swears: List[str] = []
         self.punchlines: List[str] = [] # Loading blank dictionaries
         self._load_data() # Loading data once during Cog/Module startup
+        
         db_path = self.bot.config["database_path"]  # Assuming database path is set in config
-        cooldown_configs = {}
-        try:
-            with open("config/cooldowns.json", 'r', encoding='utf-8') as f:
-                cooldown_configs = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-                print(f"Cannot (Swearer module): cannot load cooldowns file: {e}")
-        self.cooldown_manager = CooldownManager(db_path, cooldown_configs)
+        self.cooldown_manager = CooldownManager(db_path)
 
     def _load_data(self):
         # Private method to load swears and puents from JSON file.
         config = self.bot.config
         try: 
-            filename = config["module_files"]["swears_file"]
-            dir_path = config["directories"]["data_dir"]
+            filename = config["data_files"]["swears_file"]
+            dir_path = config["data_dir"]
             file_path = os.path.join(dir_path, filename)
 
             with open(file_path, 'r', encoding='utf-8') as f:

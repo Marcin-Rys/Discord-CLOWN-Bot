@@ -1,6 +1,6 @@
 # Pliki środowiskowe (bardzo ważne!)
 .env
-config.json
+config/config.json
 config/cooldowns.json
 config/modules.json
 config/cooldowns.json
@@ -20,6 +20,7 @@ data/jokes.json
 data/statuses.json
 data/swears.json
 data/ama.json
+data/sqlite_database.db
 sounds/
 
 # Baza danych i logi
