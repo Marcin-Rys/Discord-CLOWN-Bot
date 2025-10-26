@@ -9,6 +9,7 @@ import discord
 from discord.ext import commands
 
 from modules.engine.translator import BotTranslator
+from modules.engine.localization_loader import load_all_translations, apply_localizations
 from modules.engine.sqlite_database_init import initialize_database
 
 import logging 
@@ -126,9 +127,12 @@ async def main():
         except Exception as e:
             print(f" -- Error while loading {module_path}:")
             print(f"    {type(e).__name__}: {e}")
+    
+    all_translations = load_all_translations(LANG_DIR)
+    apply_localizations(bot, all_translations)
     print("\n--- STARTUP SEQUENCE DONE ---")
     print(">>> Trying to connect with Discord...")
-
+    
     await bot.start(TOKEN)
 
 

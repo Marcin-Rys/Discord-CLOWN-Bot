@@ -1,0 +1,11 @@
+{
+    "command_name": "przeklinak",
+    "command_description": "W bardzo śmieszny i inteligentny(dodając 'sra') sposób przerabia treść wiadomośći",
+    "command_option_text_name":"tekst",
+    "command_option_text_description":"Tekst do przerobienia, pozostaw puste jeśli chcesz użyć ostatniej wiadomości",
+    
+    "error_no_data":"Nie ma danych do przerobienia, sprawdź plik swear_data.json",
+    "error_message_not_found":"Nie udało mi się znaleźć ostatniej wiadomości do przerobienia",
+    "error_in_text_processing":"Nie udało się wygenerować odpowiedzi, spróbuj z innym tekstem."
+
+}

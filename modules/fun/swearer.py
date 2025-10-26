@@ -5,6 +5,8 @@ import random
 import json
 import os
 from typing import Optional, List, Dict
+
+
 from ..engine.cooldown_manager import CooldownManager
 
 
@@ -40,9 +42,9 @@ class Swearer(commands.Cog):
     def _swear_up_text(self, text: str) -> str:
         # Private method to add swears and puent to text
         if not self.swears and not self.punchlines:
-            return "Error: No data to edit, check file swear_data.json"
+            return None, "swearer:error_no_data"
         
-        words = text.split()
+        words = text.split() 
         num_words = len(words)
 
         if num_words == 0 :
@@ -65,9 +67,17 @@ class Swearer(commands.Cog):
 
         return modified_text.strip()
     
-    @app_commands.command(name="przeklinak", description="Dodaje przekleństwa i puenty do wiadomośći") #TODO language pack
-    @app_commands.describe(text="Tekst do przerobienia(opcjonalnie, jeśli pusty - użyje ostatniej wiadomości)") #TODO language pack
+    @app_commands.command(
+            name="swearer",
+            description=("Intelligently mess up text with swears and punchlines.")
+            )
+    @app_commands.describe(
+        text=("The text to mess up (optional).")
+            )
+    @app_commands.rename(text="text")
     async def swear_command(self, interaction: discord.Interaction, text: Optional[str] = None):
+        translator = self.bot.tree.translator
+
         await interaction.response.defer(thinking=True)
         target_text = ""
 
@@ -82,13 +92,13 @@ class Swearer(commands.Cog):
                     message_found = True
                     break
             if not message_found:
-                await interaction.followup.send("Nie udało mi się znaleźć ostatniej wiadomości do przerobienia", ephemeral=True)
+                await interaction.followup.send("swearer:message_not_found", ephemeral=True)
                 return
         edited_text = self._swear_up_text(target_text)
         if edited_text and edited_text.strip():
             await interaction.followup.send(edited_text)
         else:
-            await interaction.followup.send("Nie udało się wygenerować odpowiedzi, spróbuj z innym tekstem.", ephemeral=True)
+            await interaction.followup.send("swearer:error_in_text_processing", ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Swearer(bot))

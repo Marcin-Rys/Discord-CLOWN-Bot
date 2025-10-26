@@ -6,7 +6,6 @@ from typing import Optional, Tuple
 import json
 from ..engine.cooldown_manager import CooldownManager
 
-_ = app_commands.locale_str
 # --- HELPER FUNCTION ---
 def process_sra_logic(text: str) -> tuple[Optional[str], Optional[str]]:
     """ 
@@ -76,13 +75,13 @@ class Sra(commands.Cog):
         self.cooldown_manager = CooldownManager(db_path)
         
     @app_commands.command(
-            name= "sra", 
-            description=_("sra:command_description")
+            name= "shitify", 
+            description=("Shits out an message by adding polish 'sra' prefix to a word.")
     )
     @app_commands.describe(
-        text=_("sra:option_text_description")
+        text=("Add your own text to be shitted out!(optional)")
     )
-    @app_commands.rename(text="test2")
+    @app_commands.rename(text="text")
 
     async def sra(self, interaction: discord.Interaction, text: Optional[str] = None):
         translator = self.bot.tree.translator #using translator to get error messages

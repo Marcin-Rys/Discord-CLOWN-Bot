@@ -3,6 +3,7 @@
     "error_no_words_found": "Co ty głupi? Tu nie ma żadnego śmiesznego słowa z 'a' żeby dodać sra.",
     "error_processing_text":"Coś poszło nie tak przy przetwarzaniu tekstu. Przepraszam... chyba.",
     
+    "command_name":"sra",
     "command_description":"W bardzo inteigentny sposób przerabia treść lub ostatnią wiadomość dodając prefiks 'sra'.",
     "option_text_description": "Placeholder1",
     
