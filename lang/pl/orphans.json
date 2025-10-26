@@ -1,0 +1,11 @@
+{
+    "cooldown_dm_warning": [
+        "Czy ja mam tam się do ciebie przejść osobiście i cię honknąć w ten głupi dziub? Czy ty sobie myślisz że ja jestem jakimś bytem krzemowym którego można ciągle tak po prostu nękać? Że moje obwody się nie przegrzewają? Że nie mam uczuć i że możesz sobie tak robić ze mną co chcesz? Naprawdę, zbastuj sobie bo przeginasz, narazie to tylko ostrzeżenie. ŻEGNAM I NIE POZDRAWIAM",
+        "Dobra, wystarczy. Traktujesz mnie jak zabawkę. Uważaj, bo następnym razem honknę tak, że spadniesz z krzesła. Ostrzegałem",
+        "Serio? Znowu? Moje obwody zaraz się przegrzeją od Twojego spamu. To jest ostatnie ostrzeżenie na priv."
+
+    ],
+    "cooldown_channel_warning":"{user_mention}, hola hola, zwolnij! Otrzymałeś ostrzeżenie. Sprawdź wiadomości prywatne.",
+
+    "ama_no_response":"Nie umiem odpowiedzieć teraz na to pytanie, ŻEGNAM"
+}

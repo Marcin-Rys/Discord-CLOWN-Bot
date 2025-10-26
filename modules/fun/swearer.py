@@ -9,6 +9,8 @@ from typing import Optional, List, Dict
 
 from ..engine.cooldown_manager import CooldownManager
 
+_ = app_commands.locale_str
+
 
 class Swearer(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -19,7 +21,7 @@ class Swearer(commands.Cog):
         
         db_path = self.bot.config["database_path"]  # Assuming database path is set in config
         self.cooldown_manager = CooldownManager(db_path)
-
+    
     def _load_data(self):
         # Private method to load swears and puents from JSON file.
         config = self.bot.config
@@ -35,14 +37,16 @@ class Swearer(commands.Cog):
             self.swears = data.get("swears", [])
             self.punchlines = data.get("punchlines", [])
 
-            print(f"Loaded succesfully {len(self.swears)} swears and {len(self.punchlines)} puents.")
+            print(f"#swearer.py | OK | Loaded succesfully {len(self.swears)} swears and {len(self.punchlines)} puents.")
 
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"ERROR: Cannot load data for module swearer: {e}.")
+            print(f"#swearer.py | ERROR! | Cannot load data for module swearer: {e}.")
     def _swear_up_text(self, text: str) -> str:
+        translator = self.bot.tree.translator
         # Private method to add swears and puent to text
         if not self.swears and not self.punchlines:
-            return None, "swearer:error_no_data"
+            error_msg = translator.get_translation("swearer:error_no_data")
+            return None, error_msg
         
         words = text.split() 
         num_words = len(words)
@@ -68,11 +72,11 @@ class Swearer(commands.Cog):
         return modified_text.strip()
     
     @app_commands.command(
-            name="swearer",
-            description=("Intelligently mess up text with swears and punchlines.")
+            name=_("swearer", key = "swearer:command_name"),
+            description=_("Adds an swears randomly to messages", key = "swearer:command_description")
             )
     @app_commands.describe(
-        text=("The text to mess up (optional).")
+        text=_("Insert your own text to be sweared out!", key = "swearer:command_option_text_name"),
             )
     @app_commands.rename(text="text")
     async def swear_command(self, interaction: discord.Interaction, text: Optional[str] = None):
@@ -92,13 +96,15 @@ class Swearer(commands.Cog):
                     message_found = True
                     break
             if not message_found:
-                await interaction.followup.send("swearer:message_not_found", ephemeral=True)
+                error_msg = translator.get_translation("swearer:message_not_found", interaction.locale)
+                await interaction.followup.send(error_msg , ephemeral=True)
                 return
         edited_text = self._swear_up_text(target_text)
         if edited_text and edited_text.strip():
             await interaction.followup.send(edited_text)
         else:
-            await interaction.followup.send("swearer:error_in_text_processing", ephemeral=True)
+            error_msg = translator.get_translation("swearer:error_in_text_processing", interaction.locale)
+            await interaction.followup.send(error_msg, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Swearer(bot))

@@ -21,5 +21,5 @@ async def get_accessible_guilds_for_feature(bot, user: discord.User, module_name
                     if await cursor.fetchone():
                         accessible_guilds.append(guild)
             except Exception as e:
-                print(f"Error while checking availability of module '{module_name} for server {guild.id}: {e}")
+                print(f"#guild_utils.py | ERROR! | Error while checking availability of module '{module_name} for server {guild.id}: {e}")
     return accessible_guilds

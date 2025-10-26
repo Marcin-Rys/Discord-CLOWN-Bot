@@ -40,14 +40,14 @@ class RoleCounter(commands.Cog):
             if channel.name != new_name:
                 await channel.edit(name=new_name, reason="Automatic update of role counter")
         except discord.errors.Forbidden:
-            print(f"Error: No privileges to edit channel {channel.name} on server {guild.name}")
+            print(f"#role_counter.py | Error! | No privileges to edit channel {channel.name} on server {guild.name}")
         except Exception as e:
             print(f"Unexpected error during refreshing channel: {e}")
 
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print("RoleCounter ready, starting update of role counters in background...")
+        print("#role_counter.py | Ready, starting update of role counters in background...")
         self.bot.loop.create_task(self.update_all_counters(), name="UpdateAllRoleCounters")
     
     async def update_all_counters(self):
@@ -59,16 +59,16 @@ class RoleCounter(commands.Cog):
                     all_counters = await cursor.fetchall()
 
                     if not all_counters:
-                        print("No role counters found in the database to update")
+                        print("#role_counter.py | WARNING | No role counters found in the database to update")
                         return
-                    print(f"Found {len(all_counters)} role counters to update")
+                    print(f"#role_counter.py | Found {len(all_counters)} role counters to update")
                     
                     for guild_id, role_id in all_counters:
                         await self.update_counter(guild_id,role_id)
 
-            print("Task 'UpdateAllRoleCounters' finished succesfully.")
+            print("#role_counter.py | Task 'UpdateAllRoleCounters' finished succesfully.")
         except Exception as e:
-            print(f"An error occured in the 'UpdateAllCounters' task: {e}")
+            print(f"#role_counter.py | WARNING! |An error occured in the 'UpdateAllCounters' task: {e}")
    
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Member, after: discord.Member):

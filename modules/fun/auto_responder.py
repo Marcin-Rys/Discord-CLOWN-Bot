@@ -1,11 +1,15 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import json
 import os
 import aiosqlite
+import random
 from ..engine.cooldown_manager import CooldownManager
 
 MODULE_NAME = "auto_responder"
+
+_ = app_commands.locale_str
 
 class AutoResponder(commands.Cog):
     def __init__(self, bot: commands.Bot):
@@ -50,7 +54,7 @@ class AutoResponder(commands.Cog):
                     if result:
                         response_text = result[0]        
         except Exception as e:
-            print(f"  - CRITICAL ERROR(AutoResponder) while connecting to database: {e}") #TODO language pack
+            print(f"#auto_responder.py | ERROR! | Error while connecting to database: {e}") #TODO language pack
         
         # Found response, proceeding to check cooldown and if not - send message
         if response_text:
@@ -71,6 +75,7 @@ class AutoResponder(commands.Cog):
             else:
                 # 1. Attempt to delete user message if it is on cooldown
                 try:
+                    translator = self.bot.translator
                     await message.delete()  
                 # 2. Delete last bot mesage if exists
                     if message.channel.id in self.last_response_map:
@@ -99,22 +104,27 @@ class AutoResponder(commands.Cog):
                 # 4. If warning threshold is reached, send DM.
                     if warning_level >= dm_threshold: 
                         try:
-                            dm_text = "Czy ja mam tam się do ciebie przejść osobiście i cię honknąć w ten głupi dziub? Czy ty sobie myślisz że ja jestem jakimś bytem krzemowym którego można ciągle tak po prostu nękać? " \
-                            "Że moje obwody się nie przegrzewają? Że nie mam uczuć i że możesz sobie tak robić ze mną co chcesz? Naprawdę, zbastuj sobie bo przeginasz, narazie to tylko ostrzeżenie. ŻEGNAM I NIE POZDRAWIAM"
-                            await message.author.send(dm_text) #TODO language pack
-                            await self.cooldown_manager.reset_warnings(user_id, guild_id, feature_name) # reseting counter after sending DM
+                            dm_text_variants = translator.get_translation("orphans:cooldown_dm_warning", message.author.locale)
+                            if isinstance(dm_text_variants, list) and dm_text_variants:
+                                dm_text = random.choice(dm_text_variants)
+                                await message.author.send(dm_text)
+                                await self.cooldown_manager.reset_warnings(user_id, guild_id, feature_name) # reseting counter after sending DM
+                            else:
+                                print("#auto_responder.py | ERROR | Key 'cooldown_dm_warning' is not an list or is empty")
                         except discord.Forbidden:
-                            print(f"Cannot send DM to {message.author}, blocked DMs.")
+                            print(f"#auto_responder.py | Info | Cannot send DM to {message.author}, blocked DMs.")
                 #4a. if there is no way to sent DM - there will be sent message on channel
                     else:
-                        await message.channel.send(f"{message.author.mention} Hola hola, zwolnij z tym użyciem {feature_name}, "
-                                                    "otrzymałeś ostrzeżenie. Wysłałem ci też wiadomość na priv, "
-                                                    "ale nie wiem czy odemnie odbierasz czy traktujesz mnie tylko jak zabawkę", delete_after = 15,
-                                                    mention_author = False) #TODO language pack
+                        channel_warning_text = translator.get_translation(
+                            "orphans:cooldown_channel_warning",
+                            message.author.locale,
+                            user_mention=message.author.mention
+                        )
+                        await message.channel.send(channel_warning_text, delete_after=10)
                 except discord.Forbidden:
-                    print(f"Nie mogę usunąć wiadomości od {message.author} w {message.guild.name}: Brak uprawnień.")
+                    print(f"#auto_responder.py | Info | Cannot delete message from {message.author} in {message.guild.name}: No privilleges.")
                 except Exception as e:
-                    print(f" - ERROR in ELSE block: {type(e).__name__}: {e}")
+                    print(f"#auto_responder.py | WARNING | Error in else block: {type(e).__name__}: {e}")
                 return
 
         await self.bot.process_commands(message)

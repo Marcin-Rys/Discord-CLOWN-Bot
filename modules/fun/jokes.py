@@ -7,6 +7,8 @@ from typing import List, Optional
 
 from ..engine.guild_utils import get_accessible_guilds_for_feature
 
+_ = app_commands.locale_str
+
 class Jokes(commands.Cog):
     #adding for module an name and description
     def __init__(self, bot: commands.Bot):
@@ -48,11 +50,19 @@ class Jokes(commands.Cog):
     
 
     # --- Command group ---
-    joke_group = app_commands.Group(name="joke", description="Tells a joke from database")
+    joke_group = app_commands.Group(
+        name=_("joke", key = "jokes:command_name"),
+        description=_("Tells a joke from database", key = "jokes:command_description")
+    )
 
-    @joke_group.command(name="random", description="Tells random joke from all jokes")
+    @joke_group.command(
+            name=_("random", key="jokes:subcommand_random_name"),
+            description=_("Tells random joke from all jokes", key = "jokes:subcommand_random_description")
+    )
     async def random_joke(self, interaction: discord.Interaction):
         await interaction.response.defer(thinking=True)
+        #initializing translator
+        translator = self.bot.translator
 
         guilds_to_check = []
         if interaction.guild:
@@ -61,7 +71,8 @@ class Jokes(commands.Cog):
             guilds_to_check = await get_accessible_guilds_for_feature(self.bot, interaction.user, "jokes_command")
         
         if not guilds_to_check:
-            await interaction.followup.send("Cannot find any jokes for you!", ephemeral=True)
+            error_msg = translator.get_translation("jokes:error_no_jokes", interaction.locale)
+            await interaction.followup.send(error_msg, ephemeral=True)
             return
         
         guild_ids = [g.id for g in guilds_to_check]
@@ -80,13 +91,23 @@ class Jokes(commands.Cog):
         if joke_text:
             await interaction.followup.send(joke_text)
         else: 
-            await interaction.followup.send("Seems like there is no jokes for you", ephemeral=True)
+            error_msg = translator.get_translation("jokes:error_no_jokes_in_pool", interaction.locale)
+            await interaction.followup.send(error_msg, ephemeral=True)
             
-    @joke_group.command(name="category", description="Tells random joke from selected category.")
-    @app_commands.describe(category="Select category from which you want to roll a joke.")
+    @joke_group.command(
+            name=_("category", key="subcommand_category_name"),
+            description=_("Tells random joke from selected category.", key="subcommand_category_description")
+            
+            )
+    @app_commands.describe(
+        category=_("Select category from which you want to roll a joke.", key = "option_category_description")
+        )
     @app_commands.autocomplete(category=category_autocomplete)
     async def category_joke(self, interaction: discord.Interaction, category: str):
         await interaction.response.defer(thinking=True)
+
+        #initializing translator
+        translator = self.bot.translator
 
         guilds_to_check = []
         if interaction.guild:
@@ -95,7 +116,8 @@ class Jokes(commands.Cog):
             guilds_to_check = await get_accessible_guilds_for_feature(self.bot, interaction.user, "jokes_command")
 
         if not guilds_to_check:
-            await interaction.followup.send("Cannot find any jokes for you!", ephemeral=True)
+            error_msg = translator.get_translation("jokes:error_not_in_guild")
+            await interaction.followup.send(error_msg, ephemeral=True)
             return
         
         guild_ids = [g.id for g in guilds_to_check]
@@ -115,7 +137,8 @@ class Jokes(commands.Cog):
         if joke_text:
             await interaction.followup.send(joke_text)
         else:
-            await interaction.followup.send(f"Couldn't find any jokes in category '{category}' that are available for you", ephemeral=True)
+            error_msg = translator.get_translation("jokes:error_no_jokes_in_category", interaction.locale)
+            await interaction.followup.send(error_msg, ephemeral=True)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Jokes(bot))

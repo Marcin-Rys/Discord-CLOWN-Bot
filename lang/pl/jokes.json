@@ -1,0 +1,18 @@
+{
+    "command_name":"kawał",
+    "command_description":"Komendy do opowiadania kawałów.",
+
+    "subcommand_random_name": "losowy",
+    "subcommand_random_description":"Opowiada kompletnie losowy kawał z dowolnej katergorii.",
+
+    "subcommand_category_name":"kategoria",
+    "subcommand_category_description":"Opowiada losowy kawał z danej kategorii.",
+
+    "option_category_name":"kategoria",
+    "option_category_description":"Kategoria z której chcesz wylosować kawał.",
+
+    "error_no_jokes":"Nie mogę znaleźć dla ciebie kawałów :(",
+    "error_no_jokes_in_pool":"Wygląda na to że w dostępnej dla Ciebie puli nie ma żadnych kawałów",
+    "error_no_jokes_in_category":"Nie znaleziono żadnych kawałów w kategorii '{category}' w dostępnej dla Ciebie puli.",
+    "error_not_in_guild":"Nie jesteś na żadnym serwerze zawierającym kawały"
+}

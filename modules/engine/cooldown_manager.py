@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 class CooldownManager:
     def __init__(self, db_path: str):
         self.db_path = db_path  # Assuming database path is set in config
-        print("---DEBUG(CooldownManager): CooldownManager (Database-drive) succesfully initialized ---")
+        print("#cooldown_manager.py | OK |  CooldownManager(Database-drive) succesfully initialized")
     async def check_cooldown(self, user_id: int, guild_id: int, feature_name: str) -> tuple[bool,str]:
         #Check if user is on cooldown by downloading rules from database, returns (can_use, reason)
 
@@ -19,7 +19,7 @@ class CooldownManager:
                 )
                 rules = await cursor.fetchall()
         except Exception as e:
-            print(f"CRITICAL ERROR(CooldownManager): Cannot download rules for cooldown from database {e}")
+            print(f"#cooldown_manager.py| ERROR | Cannot download rules for cooldown from database {e}")
             return True, "" #In case of database error allow usage
         
         if not rules:

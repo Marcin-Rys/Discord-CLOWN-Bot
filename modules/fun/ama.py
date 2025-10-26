@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 import json
 import random
 import os
@@ -24,9 +25,9 @@ class QuestionResponder(commands.Cog):
             for category in data['answer_categories']:  # Iterating through each category and adds responses to one large lists
                  self.all_answers.extend(category['answers'])
 
-            print(f"Loaded succesfully {len(self.all_answers)} ama responses.")
+            print(f"#ama.py | OK | Loaded succesfully {len(self.all_answers)} ama responses.")
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"ERROR!: Could not load ama response file: {e}")
+            print(f"#ama.py | ERROR! | Could not load ama response file: {e}")
 
 
     @commands.Cog.listener()
@@ -41,15 +42,12 @@ class QuestionResponder(commands.Cog):
         mentioned_ids = [user.id for user in message.mentions]
         is_bot_mentioned = self.bot.user.id in mentioned_ids
         is_a_question = message.content.strip().endswith('?')
-
-        """ --- Uncomment this for debug purposes ---
-        
-        if is_a_question:
-            print(f"--- DEBUG (Pytanie): Wiadomość to pytanie. Czy bot wspomniany? {is_bot_mentioned} ---")
-        """    
+    
+        translator = self.bot.translator
         if is_bot_mentioned and is_a_question:
             if not self.all_answers: # Check if we have any response to randomize
-                await message.reply("Nie umiem odpowiedzieć teraz na to pytanie, ŻEGNAM") #TODO language pack
+                error_msg = translator.get_translation("orphans:ama_no_response", message.author.locale)
+                await message.reply(error_msg)
                 return
             
             response = random.choice(self.all_answers) # Select random response

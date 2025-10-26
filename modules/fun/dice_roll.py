@@ -5,19 +5,30 @@ import random
 import re
 from typing import List
 
+_ = app_commands.locale_str
+
 class DiceRoller(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.dice_pattern = re.compile(r'(\d+)[dD](\d+)', re.IGNORECASE) # Pattern checker for "XdY" (ex. 1d6, 2d20), ignorecase makes that 'd' and 'D' is equal
 
-    @app_commands.command(name="rzut", description="Rzuca kością w formacie 'XdY' (np. 2d6, 1d20).") #TODO language pack
-    @app_commands.describe(dice="Wybierz standardowyrzut lub wpisz własny w formacie XdY.") #TODO language pack
+    @app_commands.command(
+        name=_("roll", key="dice_roll:command_name"), 
+        description=_("Rolls a dice, use format 'XdY' (ex. 2d6, 1d20)", key="dice_roll:command_description")
+    )
+    @app_commands.describe(
+        dice=_("Choose standard role or input your own in format XdY(ex. 2d6; 3d20).", key="dice_roll:option_dice_description")
+    ) 
     async def roll(self, interaction: discord.Interaction, dice: str):
         # 1. checking roll format with an regular expression
         match = self.dice_pattern.fullmatch(dice.strip()) 
 
+        #initializing translator
+        translator = self.bot.translator
+
         if not match:
-            await interaction.response.send_message('Niepoprawny format. Użyj formatu "XdY" np. "2d6".', ephemeral=True) #TODO language pack
+            error_msg = translator.get_translation("dice_roll:error_incorrect_format", interaction.locale)
+            await interaction.response.send_message(error_msg, ephemeral=True)
             return
         
         # 2. Downloading dice number and  dice walls
@@ -25,29 +36,52 @@ class DiceRoller(commands.Cog):
 
         # 3. Values validation 
         if rolls > 100 or limit > 1000:
-          await interaction.response.send_message("Zbyt duże wartości, maksymalnie 100 kości i 1000 ścianek.", ephemeral=True) #TODO language pack
-          return
+            error_msg = translator.get_translation("dice_roll:error_values_toomuch", interaction.locale)
+            await interaction.response.send_message(error_msg , ephemeral=True) 
+            return
         if rolls <= 0 or limit <= 0:
-            await interaction.response.send_message("Liczba kości i ścianek musi być większa od zera.", ephemeral=True)
+            error_msg = translator.get_translation("dice_roll:error_values_toosmall", interaction.locale)
+            await interaction.response.send_message("", ephemeral=True)
             return
         
         # 4. Rolling dices
         results = [random.randint(1,limit) for _ in range(rolls)]
         total_sum = sum(results)
 
+        #translations for embed
+            
+        embed_title = translator.get_translation(
+            "dice_roll:embed_title",
+            interaction.locale,
+            rolls=rolls,
+            limit=limit
+        )
+        embed_description = translator.get_translation(
+            "dice_roll:embed_description",
+            interaction.locale,
+            total_sum=total_sum
+        )
+
+        embed_author = translator.get_translation(
+            "dice_roll:embed_author",
+            interaction.locale,
+            user_name=interaction.user.display_name
+        )
         # 5. Creating and sending elegant message(Embed)
         embed = discord.Embed(
-            title=f"🎲 Rzut kością: {rolls}d{limit}", #TODO language pack
-            description=f"**Suma: {total_sum}**", #TODO language pack
+            title=embed_title,
+            description=embed_description,
             color=discord.Color.blue()
         )
-        embed.set_author(name=f"Rzut wykonany przez: {interaction.user.display_name}", icon_url=interaction.user.avatar) #TODO language pack
+        embed.set_author(name=embed_author, icon_url=interaction.user.avatar)
 
         ## To avoid spam, show single rolls only for an decend amount of rolls
         if rolls <= 25:
-            embed.add_field(name="Wyniki poszczególnych rzutów", value=", ".join(str(r) for r in results), inline=False) #TODO language pack
+            field_name = translator.get_translation("dice_roller:embed_field_name", interaction.locale)
+            embed.add_field(name=field_name, value=", ".join(str(r) for r in results), inline=False)
         else:
-            embed.set_footer(text="Nie pokazano pojedyńczych rzutów z powodu ich liczby.") #TODO language pack
+            footer_text = translator.get_translation("dice_roll:embed_footer_toomany", interaction.locale)
+            embed.set_footer(text=footer_text)
 
         await interaction.response.send_message(embed=embed)
 

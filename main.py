@@ -7,12 +7,13 @@ from dotenv import load_dotenv
 
 import discord
 from discord.ext import commands
+from discord import app_commands
 
-from modules.engine.translator import BotTranslator
-from modules.engine.localization_loader import load_all_translations, apply_localizations
 from modules.engine.sqlite_database_init import initialize_database
+from modules.engine.lang_utils import LangUtils
 
 import logging 
+import colorlog
 
 # ==============================================================================
 # LOADING ENVIROMENTAL VARIABLES
@@ -37,7 +38,7 @@ def load_module_list() -> list[str]:
         with open(filename, 'r', encoding='utf-8') as f:
             modules_to_load = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print (f"CRITICAL ERROR: Couldn't find database with module list ({filename}: {e})")
+        print (f"--- MAIN | ERROR | Couldn't find database with module list ({filename}: {e}) ---")
         return []
     
     enabled_modules =[]
@@ -46,8 +47,9 @@ def load_module_list() -> list[str]:
             if is_enabled:
                 module_path = f"modules.{folder}.{module_name}"
                 enabled_modules.append(module_path)
-    print(f"Found {len(enabled_modules)} modules to be loaded.")
+    print(f"--- MAIN | Info | Found {len(enabled_modules)} modules to be loaded.")
     return enabled_modules
+
 
 # ==============================================================================
 # BOT CLASS
@@ -56,26 +58,25 @@ class DiscordBot(commands.Bot):
     def __init__(self, config: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = config
-        self.lang_pack = None # initializing with no language pack, we will load in main()
 
 # ==============================================================================
 # MAIN START FUNCTION
 # ==============================================================================
 async def main():
+    #Logging setup
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     #logging.getLogger("discord").setLevel(logging.DEBUG)
-    print("---MAIN BOT STARTUP INITIALIZED---")
+    print("--- MAIN | Info | BOT STARTUP INITIALIZED ---")
     
     # Checking if token is setted up.
     TOKEN = os.getenv('DISCORD_TOKEN')
     if not TOKEN:
-        print("CRITICAL ERROR: No 'DISCORD_TOKEN' in .env file or enviromental variables.")
+        print("--- MAIN | CRITICAL ERROR | No 'DISCORD_TOKEN' in .env file or enviromental variables.")
         return
     
     if not all([TOKEN, DB_PATH, MODULES_CONFIG_PATH, CONFIG_PATH, LANG_DIR, DATA_DIR, DEFAULT_LANGUAGE]):
-            print("CRITICAL ERROR: Missing one or more crucial enviromental variables in .env")
+            print("--- MAIN | CRITICAL ERROR | Missing one or more crucial enviromental variables in .env")
             print("Check if there is defined: DISCORD_TOKEN, DB_PATH, MODULES_CONFIG_PATH, LANG_DIR, DEFAULT_LANGUAGE")
-            print("\n--- DEBUG: Sprawdzanie wczytanych zmiennych środowiskowych ---")
             print(f"TOKEN: {TOKEN}")
             print(f"DB_PATH: {DB_PATH}")
             print(f"MODULES_CONFIG_PATH: {MODULES_CONFIG_PATH}")
@@ -91,7 +92,7 @@ async def main():
         with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
             config = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        print(f"CRITICAL ERROR: Cannot find configuration file in: ({CONFIG_PATH}): {e}")
+        print(f"--- MAIN | CRITICAL ERROR | Cannot find configuration file in: ({CONFIG_PATH}): {e}")
         return
     
     #inputting crucial paths and settings from .env to "config" dictionary
@@ -100,26 +101,34 @@ async def main():
     config["default_language"] = DEFAULT_LANGUAGE 
     config["data_dir"] = DATA_DIR
 
+  
+    class BotCommandTree(app_commands.CommandTree):
+        pass
     # Intents initialization
     intents = discord.Intents.default() #setting up discord intents
     intents.message_content = True #need for modules reading messages
     intents.members = True #need for on_member_join
-    bot = DiscordBot(config=config, command_prefix='!', intents=intents)
-
-    # Database initialization
-    print(f"Initializing database in: {DB_PATH}...")
-    await initialize_database(DB_PATH)
-    print(">>>Database initialized succesfully.")
-
-    # Language translator initialization\
-    print(f"Initializing translations from folder: {LANG_DIR}...")
-    translator = BotTranslator(lang_dir=LANG_DIR)
+    bot = DiscordBot(
+        config=config, 
+        command_prefix='!', 
+        intents=intents,
+        tree_cls = BotCommandTree
+        )
+    
+      # Language translator initialization\
+    translator = LangUtils(lang_dir=LANG_DIR)
+    print(f"--- MAIN | OK | Started lang_utils ---")
     await bot.tree.set_translator(translator)
-    print(">>> Translations initialized succesfully.")
-  
+    bot.translator = translator
+    
+
+     # Database initialization
+    await initialize_database(DB_PATH)
+    print("--- MAIN | OK | Database initialized succesfully.")
     # Loading Cogs/Modules
+
     modules_to_load = load_module_list()
-    print("\nLoaduin modules(Cogs)...")
+    print("--- MAIN | Info | Loading modules(Cogs)...")
     for module_path in modules_to_load:
         try:
             await bot.load_extension(module_path)
@@ -128,10 +137,8 @@ async def main():
             print(f" -- Error while loading {module_path}:")
             print(f"    {type(e).__name__}: {e}")
     
-    all_translations = load_all_translations(LANG_DIR)
-    apply_localizations(bot, all_translations)
-    print("\n--- STARTUP SEQUENCE DONE ---")
-    print(">>> Trying to connect with Discord...")
+    print("\n--- MAIN | OK | STARTUP SEQUENCE DONE ---")
+    print("--- MAIN | Info | Trying to connect with Discord...")
     
     await bot.start(TOKEN)
 
@@ -143,4 +150,4 @@ if __name__ == "__main__":
     try: 
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Bot has been shutted down.") #TODO language pack
+        print("--- MAIN --- | Info | Bot has been shutted down by user.")

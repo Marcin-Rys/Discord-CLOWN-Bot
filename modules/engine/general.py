@@ -1,8 +1,5 @@
 import discord
 from discord.ext import commands
-from modules.engine.lang_utils import get_translation
-
-
 
 class General(commands.Cog):
     def __init__(self, bot:commands.Bot):
@@ -12,16 +9,16 @@ class General(commands.Cog):
     async def on_ready(self):
         ### This listener will run if bot is succesfully connected to discord and is ready to work
         print("-" * 40)
-        print("Bot is connected and ready to work!")
+        print("--- general.py| OK | Bot is connected and ready to work!")
         for guild in self.bot.guilds: #1. Printing information about server/guilds connected:
-            print(f"Connected to discord guild, bot = {self.bot.user} name = {guild.name}, ID = {guild.id}")
+            print(f"--- general.py | OK | Connected to discord guild, bot = {self.bot.user} name = {guild.name}, ID = {guild.id}")
         
-        print("\nLoaded app commands:")
+        print("\n--- general.py| OK | Loaded app commands:")
         if self.bot.tree.get_commands():
             for command in self.bot.tree.get_commands():
                 print(f" -/{command.name}")
         else:
-            print(" - Not loaded app commands.")
+            print("--- general.py| ERROR | Not loaded app commands.")
         
         print("-" * 40)
 

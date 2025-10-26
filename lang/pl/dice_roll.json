@@ -1,0 +1,16 @@
+{
+    "command_name":"rzut",
+    "command_description":"Komendy do opowiadania kawałów.",
+
+    "option_dice_description":"Wybierz standardowy rzut lub wpisz własny w formacie XdY.",
+
+    "error_incorrect_format":"Niepoprawny format. Użyj formatu 'XdY' np. '2d6'",
+    "error_values_toomuch":"Zbyt duże wartości, maksymalnie 100 kości i 1000 ścianek.",
+    "error_values_toosmall":"Liczba kości i ścianek musi być większa od zera.",
+ 
+    "embed_title":"🎲Rzut kością {rolls}d{limit}",
+    "embed_description":"**Suma: {total_sum}**",
+    "embed_author":"Rzut wykonany przez: {interaction.user.display_name}",
+    "embed_field_name":"Wyniki poszczególnych rzutów:",
+    "embed_footer_toomany":"Nie pokazano pojedyńczych rzutów z powodu ich liczby."
+}

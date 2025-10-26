@@ -4,8 +4,9 @@
     "error_processing_text":"Coś poszło nie tak przy przetwarzaniu tekstu. Przepraszam... chyba.",
     
     "command_name":"sra",
-    "command_description":"W bardzo inteigentny sposób przerabia treść lub ostatnią wiadomość dodając prefiks 'sra'.",
-    "option_text_description": "Placeholder1",
+    "command_description":"W bardzo inteligentny sposób przerabia treść lub ostatnią wiadomość dodając prefiks 'sra'.",
+    "option_text_description": "Wpisz tu tekst który chcesz przerobić(zamiast ostatniej wiadomości)",
+    "option_text_name": "tekst",
     
     "error_notinguild": "Ta komenda może być używana jedynie na serwerach(na te chwilę)",    
     "error_cooldown": "Hola hola, zwolnij! {reason}",

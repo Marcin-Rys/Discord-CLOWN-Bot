@@ -4,9 +4,14 @@ from discord import app_commands
 import random
 from typing import Optional, Tuple
 import json
+
 from ..engine.cooldown_manager import CooldownManager
 
 # --- HELPER FUNCTION ---
+# Translation helper function
+_ = app_commands.locale_str
+
+# logic for sra command
 def process_sra_logic(text: str) -> tuple[Optional[str], Optional[str]]:
     """ 
     Modifying text by adding 'sra' prefix 
@@ -75,16 +80,18 @@ class Sra(commands.Cog):
         self.cooldown_manager = CooldownManager(db_path)
         
     @app_commands.command(
-            name= "shitify", 
-            description=("Shits out an message by adding polish 'sra' prefix to a word.")
+        name= _("sra", key="sra:command_name"),
+        description = _("Intelligently messes up the text.", key = "sra:command_description")
     )
     @app_commands.describe(
-        text=("Add your own text to be shitted out!(optional)")
+        text = _("The text to mess up (optional).", key="sra:option_text_description")
     )
-    @app_commands.rename(text="text")
+    @app_commands.rename(
+        text=_("text", key="sra:option_text_name")
+    )
 
     async def sra(self, interaction: discord.Interaction, text: Optional[str] = None):
-        translator = self.bot.tree.translator #using translator to get error messages
+        translator = self.bot.translator #using translator to get error messages
 
         if not interaction.guild:
             error_msg =  translator.get_translation("sra:error_notinguild", interaction.locale)
@@ -97,7 +104,7 @@ class Sra(commands.Cog):
         can_use, reason = await self.cooldown_manager.check_cooldown(interaction.user.id, interaction.guild.id, feature_name)
         if not can_use:
             #await interaction.followup.send(contet=f"Hola hola, zwolnij! {reason}", ephemeral=True)
-            error_msg = translator.get_translation("sra:error_cooldown", interaction.locale)
+            error_msg = translator.get_translation("sra:error_cooldown", interaction.locale, reason=reason)
             await interaction.edit_original_response(content=(error_msg or "Slow down! {reason}"). format(reason=reason))
             await interaction.delete_original_response(delay=10)
             return
@@ -120,7 +127,7 @@ class Sra(commands.Cog):
 
         result_text, error_key = process_sra_logic(target_text)
 
-        if error_key :
+        if error_key:
             error_msg = translator.get_translation(error_key, interaction.locale)
             await interaction.delete_original_response()
             await interaction.followup.send(error_msg or "An error occured while processing the text.", ephemeral=True)

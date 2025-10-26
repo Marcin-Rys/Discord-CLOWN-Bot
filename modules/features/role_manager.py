@@ -101,7 +101,7 @@ class RoleManager(commands.Cog):
                 unique_roles = {row['role_id']: row for row in all_selectable_roles} #Removing duplicates if user has acces to role from different groups(ex. VIP and moderator has same roles in groups)
                 all_selectable_roles = list(unique_roles.values())
         except Exception as e:
-            print(f"Error(RoleManager): Exception during downloading roles to be chosen from database: {e}")
+            print(f"#role_manager.py| ERROR! | Exception during downloading roles to be chosen from database: {e}")
             await interaction.followup.send("There occured error during downloading available roles", ephemeral=True)
             return
         if not all_selectable_roles:

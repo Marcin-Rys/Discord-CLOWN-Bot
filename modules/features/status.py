@@ -31,9 +31,9 @@ class StatusManager(commands.Cog):
                     random_emoji = random.choice(emojis)
                     self.all_statuses.append((status, random_emoji))
 
-            print(f"Loaded succesfully {len(self.all_statuses)} available statuses.")
+            print(f"#status.py | OK | Loaded succesfully {len(self.all_statuses)} available statuses.")
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            print(f"ERROR: Couldnt load file with statuses {e}. Status loop will not be loaded")
+            print(f"#status.py | ERROR: | Couldn't load file with statuses {e}. Status loop will not be loaded")
             self.all_statuses=[] #stop loading if data is corrupted.    
 
     async def _set_random_status(self):
@@ -48,19 +48,19 @@ class StatusManager(commands.Cog):
             state=f"{emoji} {status}"
         )
         await self.bot.change_presence(status=discord.Status.idle, activity=activity)
-        print(f"Status changed to: {emoji} {status}")
+        print(f"#status.py: Status changed to: {emoji} {status}")
 
     @tasks.loop(seconds=120) # This value is default, will be overwritten in __init__
     async def change_status(self):
         try:
             await self._set_random_status() # Periodic loop to change status
         except Exception as e:
-            print(f"Error while changing status: {e}")
+            print(f"#status.py | ERROR | Error while changing status: {e}")
     @change_status.before_loop
     async def before_change_status(self):
         await self.bot.wait_until_ready()
-        print("StatusManager: Oczekiwanie na gotowość bota przed uruchomieniem pętli statusów...")
-        
+        print("#status.py | Info | Waiting for bot to be ready before starting up 'statuses' loop")
+
     def module_unload(self):
             self.change_status.cancel() # Stops loop while module is unloaded
 

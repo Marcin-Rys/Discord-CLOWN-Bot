@@ -1,69 +1,75 @@
+import discord
+from discord import app_commands
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Optional
+# import aiosqlite - for now not using it
 
+class LangUtils(app_commands.Translator):
+    def __init__(self, lang_dir: str):
+        self.translations = {}
+        self._load_all_languages(lang_dir)
+        
+    def _load_all_languages(self, lang_dir: str):
+        print(f"#lang_utils.py | Loading translations from folder: {lang_dir} ---")
+        if not os.path.isdir(lang_dir):
+            print(f"#lang_utils.py | ERROR! | Directory '{lang_dir}' doesn't exists!")
+            return
 
-def load_language_pack(lang_code: str, lang_dir: str) -> Dict:
-    """Loads a language pack from a JSON file."""
-    lang_file = os.path.join(lang_dir, f"{lang_code}.json")
-    try:
-        with open(lang_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        print(f"Error: Language file not found: {lang_file}") #critical error prompt
-        return {}  
-    except json.JSONDecodeError:
-        print(f"Error: Invalid JSON in language file: {lang_file}") #critical error prompt
-        return {}
+        for lang_code in os.listdir(lang_dir):
+            lang_path = os.path.join(lang_dir, lang_code)
+            if os.path.isdir(lang_path):
+                self.translations[lang_code] = {}
+                for filename in os.listdir(lang_path):
+                    if filename.endswith(".json"):
+                        module_name = filename[:-5].lower()
+                        file_path = os.path.join(lang_path, filename)
+                        with open(file_path, 'r', encoding="utf-8") as f:
+                            try:
+                                self.translations[lang_code][module_name] = json.load(f)
+                            except json.JSONDecodeError:
+                                print(f"lang_uils.py | ERROR! | Translation file is damaged: {file_path} ---")
+        print(f"#lang_utils.py | OK | Loaded translation for modules: {list(self.translations.keys())} ---")
 
-def get_translation(key: str, language_pack: Dict, module: Optional[str] = None, submodule: Optional[str] = None, **kwargs: Any) -> str:
-    """
-    Retrieves a translation from the loaded language pack.
-    Handles missing translations and formatting.
+    async def translate(self, string: app_commands.locale_str, locale: discord.Locale, context: app_commands.TranslationContext) -> Optional[str]:
+        #loading key from extras
+        key = string.extras.get("key")
+        if not key:
+            #no translation without key
+            return None
+        
+        lang_code = str(locale).split('-')[0]
 
-    Args:
-        key: The translation key.
-        language_pack: The loaded language pack.
-        module: The primary module (e.g., 'fun', 'administrative').
-        submodule: The submodule within the module (e.g., 'swearer', 'jokes').
-        **kwargs:  Arguments for string formatting.
-
-    Returns:
-        The translated string, or the key itself if no translation is found.
-    """
-
-    if not language_pack:
-        print("Warning: Language pack not loaded.  Using default (English) keys.")
-        return key
-
-    translation = None
-
-    # 1. try specific module and submodule
-    if module and submodule:
         try:
-            translation = language_pack["modules"][module][submodule][key]
-        except (KeyError, TypeError):
-            pass #Ignore and try other locations
-    # 2. Try module without submodule
-    if translation is None and module:
-        try: translation = language_pack["modules"][module][key]
-        except (KeyError, TypeError):
-            pass
-    # 3. Try engine.general
-    if translation is None:
-        try:
-            translation = language_pack["modules"]["engine"]["general"][key]
-        except(KeyError, TypeError):
-            pass
-    #4. Try general_errors(top level)
-    if translation is None:
-        try:
-            translation = language_pack["general_errors"][key]
-        except(KeyError, TypeError):
-            pass
-    #5. If still not found, return the key
-    if translation is None:
-        print(f"Warning: Translation not found for key: '{key}'")
-        return key.format(**kwargs) if kwargs else key
+            module_name, string_key = key.split(":", 1)
+            module_name = module_name.lower()
+        except ValueError:
+            print("#lang_utils | Warning! | Wrong key value")
+            return None
+            
+        #searching for translatioin using key from "extras"
+        translation = self.translations.get(lang_code, {}).get(module_name, {}).get(string_key)
+        if translation is not None:
+            return translation
+        
+        #fallback to en language
+        return self.translations.get("en", {}).get(module_name, {}).get(string_key)
     
-    return translation.format(**kwargs) if kwargs else key
+    def get_translation(self, key: str, locale: discord.Locale, fallback: str = "Błąd", **kwargs) -> str:
+        
+        lang_code = str(locale).split('-')[0]
+        try:
+            module_name, string_key = key.split(":", 1)
+            module_name = module_name.lower()
+        except (ValueError, AttributeError):
+            return fallback.format(**kwargs) if kwargs else fallback
+
+        translation = self.translations.get(lang_code, {}).get(module_name, {}).get(string_key)
+        if translation is not None:
+            return translation.format(**kwargs) if kwargs else translation
+
+        fallback_translation = self.translations.get("en", {}).get(module_name, {}).get(string_key)
+        if fallback_translation is not None:
+            return fallback_translation.format(**kwargs) if kwargs else fallback_translation
+        
+        return fallback.format(**kwargs) if kwargs else fallback

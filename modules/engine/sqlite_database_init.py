@@ -2,7 +2,7 @@ import aiosqlite
 import os
 
 async def initialize_database(db_path: str):
-    print(f"Initializing database in: {db_path}")
+    print(f"#sqlite_database_init.py | Info | Initializing database in: {db_path}")
 
     db_dir = os.path.dirname(db_path)
     if db_dir:
@@ -180,7 +180,7 @@ async def initialize_database(db_path: str):
             """)
             await db.commit()
             
-        print("Database initialized succesfully")
+        print("#sqlite_database_init.py | OK | Database initialized succesfully")
     except Exception as e:
-        print(f"Error during initialization of database: {e}")
+        print(f"#sqlite_database_init.py | ERROR | Error during initialization of database: {e}")
         
